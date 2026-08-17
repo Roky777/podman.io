@@ -108,6 +108,10 @@ const config = {
             title: 'Docs',
             items: [
               {
+                label: 'Downloads',
+                to: '/downloads',
+              },
+              {
                 label: 'Installation Instructions',
                 to: 'docs/installation',
               },
