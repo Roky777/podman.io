@@ -7,6 +7,12 @@ import useOperatingSystem from '@site/src/hooks/useOperatingSystem';
 import { platforms, products } from '@site/static/data/downloads';
 import type { DownloadAsset, GlossaryTerm, InstallCommand, PlatformId, Product } from '@site/static/data/downloads';
 
+/* Shared focus indicator. purple-500 clears 3:1 against both the white cards
+   (3.8:1) and the dark background (4.6:1), so it stays visible in either
+   theme where the browser default outline does not. */
+const focusRing =
+  'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900';
+
 /* Podman purple for the CLI, Podman Desktop purple for Desktop, so the two
    products read as distinct. Written out in full because Tailwind only ships
    classes it can find literally in the source. */
@@ -60,7 +66,7 @@ const Term = ({ term, definition, accent }: GlossaryTerm & { accent: string }): 
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
         onKeyDown={event => event.key === 'Escape' && setOpen(false)}
-        className={`cursor-help border-0 bg-transparent p-0 font-semibold underline decoration-dotted underline-offset-4 ${accent}`}>
+        className={`cursor-help rounded-sm border-0 bg-transparent p-0 font-semibold underline decoration-dotted underline-offset-4 ${accent} ${focusRing}`}>
         {term}
       </button>
       {/* Opacity rather than visibility, so the text stays in the accessibility
@@ -68,7 +74,7 @@ const Term = ({ term, definition, accent }: GlossaryTerm & { accent: string }): 
       <span
         id={id}
         role="tooltip"
-        className={`absolute left-0 top-full z-10 mt-2 w-64 rounded-md border-2 border-gray-500 bg-white p-3 text-sm font-normal leading-relaxed text-gray-700 shadow-lg transition-opacity duration-150 dark:bg-gray-900 dark:text-gray-100 ${
+        className={`absolute left-0 top-full z-10 mt-2 w-64 rounded-md border-2 border-gray-500 bg-white p-3 text-sm font-normal leading-relaxed text-gray-700 shadow-lg transition-opacity duration-150 motion-reduce:transition-none dark:bg-gray-900 dark:text-gray-100 ${
           open ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}>
         {definition}
@@ -120,7 +126,7 @@ const PlatformTabs = ({ selected, onSelect }: PlatformTabsProps): JSX.Element =>
             tabIndex={isSelected ? 0 : -1}
             onClick={() => onSelect(platform.id)}
             onKeyDown={event => handleKeyDown(event, index)}
-            className={`flex flex-1 cursor-pointer items-center justify-center gap-3 rounded-md border-2 px-6 py-3 text-lg font-semibold transition duration-150 ease-in-out ${
+            className={`${focusRing} flex flex-1 cursor-pointer items-center justify-center gap-3 rounded-md border-2 px-6 py-3 text-lg font-semibold transition duration-150 ease-in-out motion-reduce:transition-none ${
               isSelected
                 ? 'border-purple-700 bg-purple-700 text-white dark:border-purple-500 dark:bg-purple-700 dark:text-white'
                 : 'border-gray-100 bg-white text-gray-700 hover:border-purple-300 hover:text-purple-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:border-purple-500 dark:hover:text-purple-300'
@@ -163,7 +169,10 @@ const FastPath = ({ platform }: { platform: PlatformId }): JSX.Element | null =>
           <>
             <a
               href={asset.path}
-              className={`mx-auto flex max-w-md items-center justify-center gap-3 rounded-md px-8 py-4 text-xl font-semibold no-underline shadow-md transition duration-150 ease-in-out hover:no-underline hover:shadow-lg ${accent.button}`}>
+              aria-label={`Download ${primary.title} ${primary.version} for ${asset.label}, ${asset.detail}${
+                asset.size ? `, ${asset.size}` : ''
+              }`}
+              className={`${focusRing} mx-auto flex max-w-md items-center justify-center gap-3 rounded-md px-8 py-4 text-xl font-semibold no-underline shadow-md transition duration-150 ease-in-out motion-reduce:transition-none hover:no-underline hover:shadow-lg ${accent.button}`}>
               <Icon icon="material-symbols:download-rounded" className="text-2xl" aria-hidden="true" />
               Download for {platformLabel}
             </a>
@@ -181,7 +190,7 @@ const FastPath = ({ platform }: { platform: PlatformId }): JSX.Element | null =>
 
         {primary.checksums && (
           <p className="mt-2 mb-0 text-sm">
-            <a href={primary.checksums.path} className={accent.text}>
+            <a href={primary.checksums.path} className={`rounded-sm ${accent.text} ${focusRing}`}>
               {primary.checksums.text}
             </a>
           </p>
@@ -191,7 +200,7 @@ const FastPath = ({ platform }: { platform: PlatformId }): JSX.Element | null =>
       {/* Secondary intent: available in one click, deliberately not competing. */}
       {secondary && (
         <p className="mt-4 mb-0 text-gray-700 dark:text-gray-100">
-          <a href="#all-downloads" className={accent.text}>
+          <a href="#all-downloads" className={`rounded-sm ${accent.text} ${focusRing}`}>
             Just need {secondary.id === 'cli' ? 'the CLI' : 'the desktop app'}?
           </a>
         </p>
@@ -226,7 +235,7 @@ const DistroCommands = ({ commands, accent }: DistroCommandsProps): JSX.Element 
               type="button"
               aria-pressed={isActive}
               onClick={() => setActiveLabel(command.label)}
-              className={`cursor-pointer rounded-md border-2 px-3 py-1 text-sm font-semibold transition duration-150 ease-in-out ${
+              className={`${focusRing} cursor-pointer rounded-md border-2 px-3 py-1 text-sm font-semibold transition duration-150 ease-in-out motion-reduce:transition-none ${
                 isActive
                   ? `border-transparent ${accent.button}`
                   : 'border-gray-300 bg-white text-gray-700 hover:border-gray-500 dark:border-gray-500 dark:bg-gray-900 dark:text-gray-100 dark:hover:border-gray-300'
@@ -248,7 +257,7 @@ const ProductCard = ({ product, platform }: ProductCardProps): JSX.Element => {
   const isLinux = platform === 'linux';
 
   return (
-    <article className="flex flex-1 flex-col rounded-md border-2 border-gray-100 bg-white p-6 shadow-md transition duration-150 ease-in-out hover:shadow-lg dark:border-gray-700 dark:bg-gray-900 lg:p-8">
+    <article className="flex flex-1 flex-col rounded-md border-2 border-gray-100 bg-white p-6 shadow-md transition duration-150 ease-in-out motion-reduce:transition-none hover:shadow-lg dark:border-gray-700 dark:bg-gray-900 lg:p-8">
       <header className={`mb-6 border-b-2 pb-6 ${accent.rule}`}>
         <div className="flex items-center gap-4">
           <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-md ${accent.iconBox}`}>
@@ -282,7 +291,10 @@ const ProductCard = ({ product, platform }: ProductCardProps): JSX.Element => {
             <li key={asset.label}>
               <a
                 href={asset.path}
-                className={`flex items-center gap-3 rounded-md px-5 py-3 no-underline transition duration-150 ease-in-out hover:no-underline hover:shadow-md ${
+                aria-label={`${asset.isDocs ? 'Installation guide' : 'Download'} ${product.title} ${
+                  product.version
+                } for ${asset.label}, ${asset.detail}${asset.size ? `, ${asset.size}` : ''}`}
+                className={`${focusRing} flex items-center gap-3 rounded-md px-5 py-3 no-underline transition duration-150 ease-in-out motion-reduce:transition-none hover:no-underline hover:shadow-md ${
                   asset.recommended
                     ? `font-semibold ${accent.button}`
                     : 'border-2 border-gray-500 bg-white text-gray-700 hover:border-gray-700 dark:border-gray-500 dark:bg-gray-900 dark:text-gray-100 dark:hover:border-gray-300'
@@ -310,15 +322,15 @@ const ProductCard = ({ product, platform }: ProductCardProps): JSX.Element => {
       {note && <p className="mb-0 text-sm leading-relaxed text-gray-700 dark:text-gray-100">{note}</p>}
 
       <footer className="mt-auto flex flex-wrap gap-x-6 gap-y-2 border-t-2 border-gray-100 pt-6 dark:border-gray-700">
-        <a href={product.releaseNotes.path} className={`text-sm ${accent.text}`}>
+        <a href={product.releaseNotes.path} className={`rounded-sm text-sm ${accent.text} ${focusRing}`}>
           {product.releaseNotes.text}
         </a>
         {product.checksums && (
-          <a href={product.checksums.path} className={`text-sm ${accent.text}`}>
+          <a href={product.checksums.path} className={`rounded-sm text-sm ${accent.text} ${focusRing}`}>
             {product.checksums.text}
           </a>
         )}
-        <a href={product.docsLink.path} className={`text-sm ${accent.text}`}>
+        <a href={product.docsLink.path} className={`rounded-sm text-sm ${accent.text} ${focusRing}`}>
           {product.docsLink.text}
         </a>
       </footer>

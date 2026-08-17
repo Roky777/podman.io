@@ -15,7 +15,7 @@ function WaveBorder({
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      className={`${grid} ${layout}`}
+      className={[grid, layout].filter(Boolean).join(' ')}
       width={`${width}%`}
       viewBox={`-8620 -1968 1400 ${height}`}>
       <path
