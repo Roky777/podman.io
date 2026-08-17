@@ -132,6 +132,10 @@ const config = {
             title: 'Community',
             items: [
               {
+                label: 'YouTube',
+                to: '/youtube',
+              },
+              {
                 label: 'Matrix',
                 href: 'https://matrix.to/#/#podman:fedoraproject.org',
               },
