@@ -15,8 +15,18 @@ import IconLink from '@site/src/components/utilities/IconLink';
 import Button from '@site/src/components/utilities/Button';
 import DropdownButton from '@site/src/components/utilities/DropdownButton';
 import WaveBorder from '@site/src/components/shapes/WaveBorder';
+import LatestVideo from '@site/src/components/content/LatestVideo';
+/* HOOKS */
+import useLatestVideos from '@site/src/hooks/useLatestVideos';
 /* PAGE DATA */
-import { header, communityChat, communityMeetings, mailingList, submittingIssues } from '@site/static/data/community';
+import {
+  header,
+  communityChat,
+  communityMeetings,
+  mailingList,
+  submittingIssues,
+  latestVideo,
+} from '@site/static/data/community';
 
 /* PAGE COMPONENTS */
 const CommunityLinks = () => {
@@ -70,6 +80,32 @@ const CommunityMeetingSection = (): JSX.Element => {
           className="order-first mx-auto object-cover lg:max-w-lg"
         />
         <CommunityMeetingsCardGrid cards={communityMeetings.cards} />
+      </div>
+    </section>
+  );
+};
+
+const LatestVideoSection = (): JSX.Element => {
+  const [featured] = useLatestVideos();
+
+  return (
+    /* Opens at gray-100, where CommunityMeetingSection's gradient ends, so the
+       two meeting-related sections read as one run rather than two blocks. */
+    <section className="bg-gray-100 pb-12 dark:bg-gray-900">
+      <div className="container flex flex-col">
+        <SectionHeader
+          title={latestVideo.title}
+          description={latestVideo.subtitle}
+          textGradientStops="from-purple-500 to-purple-700 dark:text-purple-500"
+          textGradient={true}
+        />
+        <LatestVideo video={featured} />
+        <a
+          href={latestVideo.link.path}
+          className="mx-auto mt-6 flex items-center gap-1 text-purple-700 dark:text-purple-300">
+          {latestVideo.link.text}
+          <Icon icon="material-symbols:arrow-forward-rounded" aria-hidden="true" />
+        </a>
       </div>
     </section>
   );
@@ -222,6 +258,7 @@ function Community() {
       />
       <CommunityChatSection />
       <CommunityMeetingSection />
+      <LatestVideoSection />
       <InfoBanner
         description="**Searching for Podman Desktop Community Meetings?** [Click Here](https://podman-desktop.io/community#community-events) or visit the [official website](https://podman-desktop.io) to learn more."
         image={{

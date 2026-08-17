@@ -201,4 +201,10 @@ const submittingIssues = [
   },
 ];
 
-export { header, communityChat, communityMeetings, mailingList, submittingIssues };
+const latestVideo = {
+  title: 'Latest from YouTube',
+  subtitle: 'Catch up on recent community meetings.',
+  link: { text: 'See all videos', path: '/youtube' },
+};
+
+export { header, communityChat, communityMeetings, mailingList, submittingIssues, latestVideo };
