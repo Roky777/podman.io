@@ -5,7 +5,7 @@ import CodeBlock from '@theme/CodeBlock';
 import useOperatingSystem from '@site/src/hooks/useOperatingSystem';
 /* PAGE DATA */
 import { platforms, products } from '@site/static/data/downloads';
-import type { DownloadAsset, InstallCommand, PlatformId, Product } from '@site/static/data/downloads';
+import type { DownloadAsset, GlossaryTerm, InstallCommand, PlatformId, Product } from '@site/static/data/downloads';
 
 /* Podman purple for the CLI, Podman Desktop purple for Desktop, so the two
    products read as distinct. Written out in full because Tailwind only ships
@@ -39,6 +39,42 @@ type DistroCommandsProps = {
 type ProductCardProps = {
   product: Product;
   platform: PlatformId;
+};
+
+/* GLOSSARY TERM */
+const Term = ({ term, definition, accent }: GlossaryTerm & { accent: string }): JSX.Element => {
+  const [open, setOpen] = useState(false);
+  const id = `term-${term}`;
+
+  return (
+    <span className="relative inline-block">
+      <button
+        type="button"
+        /* Always references the definition, so assistive technology announces
+           it on focus rather than only on hover. */
+        aria-describedby={id}
+        aria-expanded={open}
+        onClick={() => setOpen(value => !value)}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        onKeyDown={event => event.key === 'Escape' && setOpen(false)}
+        className={`cursor-help border-0 bg-transparent p-0 font-semibold underline decoration-dotted underline-offset-4 ${accent}`}>
+        {term}
+      </button>
+      {/* Opacity rather than visibility, so the text stays in the accessibility
+          tree for aria-describedby while hidden. */}
+      <span
+        id={id}
+        role="tooltip"
+        className={`absolute left-0 top-full z-10 mt-2 w-64 rounded-md border-2 border-gray-500 bg-white p-3 text-sm font-normal leading-relaxed text-gray-700 shadow-lg transition-opacity duration-150 dark:bg-gray-900 dark:text-gray-100 ${
+          open ? 'opacity-100' : 'pointer-events-none opacity-0'
+        }`}>
+        {definition}
+      </span>
+    </span>
+  );
 };
 
 /** The asset a visitor on this platform should most likely download. */
@@ -223,7 +259,16 @@ const ProductCard = ({ product, platform }: ProductCardProps): JSX.Element => {
             <p className="mb-0 font-mono text-sm text-gray-700 dark:text-gray-100">Version {product.version}</p>
           </div>
         </div>
-        <p className="mt-4 mb-0 leading-relaxed text-gray-700 dark:text-gray-100">{product.tagline}</p>
+        <p className="mt-4 mb-0 leading-relaxed text-gray-700 dark:text-gray-100">
+          {product.tagline}
+          {product.terms?.map((entry, index) => (
+            <React.Fragment key={entry.term}>
+              {index === 0 ? ' ' : ' and '}
+              <Term {...entry} accent={accent.text} />
+            </React.Fragment>
+          ))}
+          {product.terms && '.'}
+        </p>
       </header>
 
       {isLinux && commands && commands.length > 0 && <DistroCommands commands={commands} accent={accent} />}
@@ -294,7 +339,7 @@ function DownloadsSection(): JSX.Element {
   const { detected, selected, select } = useOperatingSystem();
 
   return (
-    <section className="container mb-12 mt-8 lg:mb-16 lg:mt-10">
+    <section className="container my-12 lg:my-16">
       {detected && (
         <div className="mb-12">
           <FastPath platform={detected} />

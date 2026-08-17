@@ -68,10 +68,18 @@ const platforms: { id: PlatformId; label: string; icon: string }[] = [
 
 /* PRODUCTS */
 
+export type GlossaryTerm = {
+  term: string;
+  definition: string;
+};
+
 export type Product = {
   id: 'cli' | 'desktop';
   title: string;
   tagline: string;
+  /* Rendered after the tagline as inline terms with a definition on hover,
+     click or focus. */
+  terms?: GlossaryTerm[];
   icon: string;
   version: string;
   releaseNotes: { text: string; path: string };
@@ -86,8 +94,19 @@ const products: Product[] = [
   {
     id: 'cli',
     title: 'Podman CLI',
-    tagline:
-      'The command line tool. Build, run, and manage containers and pods from your terminal — daemonless and rootless.',
+    tagline: 'The command line tool. Build, run, and manage containers and pods from your terminal —',
+    terms: [
+      {
+        term: 'daemonless',
+        definition:
+          'There is no background service to keep running. Each podman command does its work and exits, so nothing of Podman is left running between commands.',
+      },
+      {
+        term: 'rootless',
+        definition:
+          'Containers run as your normal user account instead of as root, so a container breakout does not hand over the host. In practice, you will not need sudo for most podman commands.',
+      },
+    ],
     icon: 'material-symbols:terminal-rounded',
     version: LATEST_VERSION,
     releaseNotes: {
