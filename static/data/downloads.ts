@@ -33,8 +33,14 @@ export type DownloadAsset = {
   size?: string;
 };
 
+export type InstallCommand = {
+  label: string;
+  command: string;
+};
+
 export type PlatformDownloads = {
   assets?: DownloadAsset[];
+  commands?: InstallCommand[];
   note?: string;
 };
 
@@ -127,7 +133,17 @@ const products: Product[] = [
         ],
         note: 'After installing, run `podman machine init` and `podman machine start` to create the Linux guest that runs your containers.',
       },
-      linux: {},
+      linux: {
+        commands: [
+          { label: 'Fedora, RHEL, CentOS Stream', command: 'sudo dnf -y install podman' },
+          { label: 'Debian, Ubuntu', command: 'sudo apt-get -y install podman' },
+          { label: 'Arch, Manjaro', command: 'sudo pacman -S podman' },
+          { label: 'Alpine', command: 'sudo apk add podman' },
+          { label: 'openSUSE', command: 'sudo zypper install podman' },
+          { label: 'Gentoo', command: 'sudo emerge app-containers/podman' },
+        ],
+        note: 'On Linux, Podman runs your containers natively — no virtual machine required. Install it from your distribution’s package manager.',
+      },
     },
   },
   {
@@ -208,6 +224,7 @@ const products: Product[] = [
             size: '151.6 MB',
           },
         ],
+        commands: [{ label: 'Flathub', command: 'flatpak install --user flathub io.podman_desktop.PodmanDesktop' }],
       },
     },
   },

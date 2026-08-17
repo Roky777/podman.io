@@ -1,10 +1,11 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Icon } from '@iconify/react';
+import CodeBlock from '@theme/CodeBlock';
 /* HOOKS */
 import useOperatingSystem from '@site/src/hooks/useOperatingSystem';
 /* PAGE DATA */
 import { platforms, products } from '@site/static/data/downloads';
-import type { DownloadAsset, PlatformId, Product } from '@site/static/data/downloads';
+import type { DownloadAsset, InstallCommand, PlatformId, Product } from '@site/static/data/downloads';
 
 /* Podman purple for the CLI, Podman Desktop purple for Desktop, so the two
    products read as distinct. Written out in full because Tailwind only ships
@@ -28,6 +29,11 @@ const accents = {
 type PlatformTabsProps = {
   selected: PlatformId | null;
   onSelect: (platform: PlatformId) => void;
+};
+
+type DistroCommandsProps = {
+  commands: InstallCommand[];
+  accent: (typeof accents)[keyof typeof accents];
 };
 
 type ProductCardProps = {
@@ -105,7 +111,7 @@ const FastPath = ({ platform }: { platform: PlatformId }): JSX.Element | null =>
 
   const accent = accents[primary.id];
   const asset = getRecommendedAsset(primary, platform);
-  if (!asset) return null;
+  const command = primary.downloads[platform]?.commands?.[0];
 
   return (
     <div className="mx-auto max-w-2xl text-center">
@@ -117,16 +123,25 @@ const FastPath = ({ platform }: { platform: PlatformId }): JSX.Element | null =>
           {primary.title} {primary.version}
         </h2>
 
-        <a
-          href={asset.path}
-          className={`mx-auto flex max-w-md items-center justify-center gap-3 rounded-md px-8 py-4 text-xl font-semibold no-underline shadow-md transition duration-150 ease-in-out hover:no-underline hover:shadow-lg ${accent.button}`}>
-          <Icon icon="material-symbols:download-rounded" className="text-2xl" aria-hidden="true" />
-          Download for {platformLabel}
-        </a>
-        <p className="mt-3 mb-0 text-sm text-gray-700 dark:text-gray-100">
-          {asset.detail}
-          {asset.size && ` · ${asset.size}`}
-        </p>
+        {asset ? (
+          <>
+            <a
+              href={asset.path}
+              className={`mx-auto flex max-w-md items-center justify-center gap-3 rounded-md px-8 py-4 text-xl font-semibold no-underline shadow-md transition duration-150 ease-in-out hover:no-underline hover:shadow-lg ${accent.button}`}>
+              <Icon icon="material-symbols:download-rounded" className="text-2xl" aria-hidden="true" />
+              Download for {platformLabel}
+            </a>
+            <p className="mt-3 mb-0 text-sm text-gray-700 dark:text-gray-100">
+              {asset.detail}
+              {asset.size && ` · ${asset.size}`}
+            </p>
+          </>
+        ) : (
+          <div className="text-left">
+            <p className="mb-2 text-sm text-gray-700 dark:text-gray-100">{command?.label}</p>
+            <CodeBlock language="bash">{command?.command}</CodeBlock>
+          </div>
+        )}
 
         {primary.checksums && (
           <p className="mt-2 mb-0 text-sm">
@@ -149,10 +164,52 @@ const FastPath = ({ platform }: { platform: PlatformId }): JSX.Element | null =>
   );
 };
 
+/* PACKAGE MANAGER COMMANDS */
+const DistroCommands = ({ commands, accent }: DistroCommandsProps): JSX.Element => {
+  const [activeLabel, setActiveLabel] = useState(commands[0].label);
+  const active = commands.find(command => command.label === activeLabel) ?? commands[0];
+
+  if (commands.length === 1) {
+    return (
+      <div className="mb-4">
+        <h3 className="mb-2 text-base font-semibold text-gray-700 dark:text-gray-100">{commands[0].label}</h3>
+        <CodeBlock language="bash">{commands[0].command}</CodeBlock>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-4">
+      <h3 className="mb-3 text-base font-semibold text-gray-700 dark:text-gray-100">Choose your distribution</h3>
+      <div className="mb-3 flex flex-wrap gap-2">
+        {commands.map(command => {
+          const isActive = command.label === active.label;
+          return (
+            <button
+              key={command.label}
+              type="button"
+              aria-pressed={isActive}
+              onClick={() => setActiveLabel(command.label)}
+              className={`cursor-pointer rounded-md border-2 px-3 py-1 text-sm font-semibold transition duration-150 ease-in-out ${
+                isActive
+                  ? `border-transparent ${accent.button}`
+                  : 'border-gray-300 bg-white text-gray-700 hover:border-gray-500 dark:border-gray-500 dark:bg-gray-900 dark:text-gray-100 dark:hover:border-gray-300'
+              }`}>
+              {command.label}
+            </button>
+          );
+        })}
+      </div>
+      <CodeBlock language="bash">{active.command}</CodeBlock>
+    </div>
+  );
+};
+
 /* PRODUCT CARDS */
 const ProductCard = ({ product, platform }: ProductCardProps): JSX.Element => {
   const accent = accents[product.id];
-  const { assets, note } = product.downloads[platform];
+  const { assets, commands, note } = product.downloads[platform];
+  const isLinux = platform === 'linux';
 
   return (
     <article className="flex flex-1 flex-col rounded-md border-2 border-gray-100 bg-white p-6 shadow-md transition duration-150 ease-in-out hover:shadow-lg dark:border-gray-700 dark:bg-gray-900 lg:p-8">
@@ -169,8 +226,13 @@ const ProductCard = ({ product, platform }: ProductCardProps): JSX.Element => {
         <p className="mt-4 mb-0 leading-relaxed text-gray-700 dark:text-gray-100">{product.tagline}</p>
       </header>
 
+      {isLinux && commands && commands.length > 0 && <DistroCommands commands={commands} accent={accent} />}
+
       {assets && assets.length > 0 && (
         <ul className="mb-4 flex list-none flex-col gap-3 p-0">
+          {isLinux && (
+            <li className="mb-1 text-base font-semibold text-gray-700 dark:text-gray-100">Or download directly</li>
+          )}
           {assets.map(asset => (
             <li key={asset.label}>
               <a
@@ -197,6 +259,8 @@ const ProductCard = ({ product, platform }: ProductCardProps): JSX.Element => {
           ))}
         </ul>
       )}
+
+      {!isLinux && commands && commands.length > 0 && <DistroCommands commands={commands} accent={accent} />}
 
       {note && <p className="mb-0 text-sm leading-relaxed text-gray-700 dark:text-gray-100">{note}</p>}
 
