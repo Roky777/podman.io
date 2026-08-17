@@ -351,7 +351,7 @@ function DownloadsSection(): JSX.Element {
   const { detected, selected, select } = useOperatingSystem();
 
   return (
-    <section className="container my-12 lg:my-16">
+    <section className="container mb-12 mt-8 lg:mb-16 lg:mt-10">
       {detected && (
         <div className="mb-12">
           <FastPath platform={detected} />
