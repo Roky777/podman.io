@@ -3,13 +3,43 @@ import { Icon } from '@iconify/react';
 /* HOOKS */
 import useOperatingSystem from '@site/src/hooks/useOperatingSystem';
 /* PAGE DATA */
-import { platforms } from '@site/static/data/downloads';
-import type { PlatformId } from '@site/static/data/downloads';
+import { platforms, products } from '@site/static/data/downloads';
+import type { DownloadAsset, PlatformId, Product } from '@site/static/data/downloads';
+
+/* Podman purple for the CLI, Podman Desktop purple for Desktop, so the two
+   products read as distinct. Written out in full because Tailwind only ships
+   classes it can find literally in the source. */
+const accents = {
+  cli: {
+    text: 'text-purple-700 dark:text-purple-300',
+    iconBox: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-100',
+    button: 'bg-purple-700 text-white hover:bg-purple-900 hover:text-white dark:bg-purple-700 dark:hover:bg-purple-900',
+    rule: 'border-purple-300 dark:border-purple-700',
+  },
+  desktop: {
+    text: 'text-deep-purple-700 dark:text-deep-purple-300',
+    iconBox: 'bg-deep-purple-100 text-deep-purple-700 dark:bg-deep-purple-900 dark:text-deep-purple-100',
+    button:
+      'bg-deep-purple-700 text-white hover:bg-deep-purple-900 hover:text-white dark:bg-deep-purple-700 dark:hover:bg-deep-purple-900',
+    rule: 'border-deep-purple-300 dark:border-deep-purple-700',
+  },
+};
 
 type PlatformTabsProps = {
   selected: PlatformId | null;
   onSelect: (platform: PlatformId) => void;
 };
+
+type ProductCardProps = {
+  product: Product;
+  platform: PlatformId;
+};
+
+/** The asset a visitor on this platform should most likely download. */
+function getRecommendedAsset(product: Product, platform: PlatformId): DownloadAsset | undefined {
+  const assets = product.downloads[platform]?.assets ?? [];
+  return assets.find(asset => asset.recommended && !asset.isDocs);
+}
 
 /* PLATFORM TABS */
 const PlatformTabs = ({ selected, onSelect }: PlatformTabsProps): JSX.Element => {
@@ -62,16 +92,158 @@ const PlatformTabs = ({ selected, onSelect }: PlatformTabsProps): JSX.Element =>
   );
 };
 
-/* SECTION CONTENT */
-function DownloadsSection(): JSX.Element {
-  const { selected, select } = useOperatingSystem();
+/* FAST PATH */
+const FastPath = ({ platform }: { platform: PlatformId }): JSX.Element | null => {
+  const platformLabel = platforms.find(item => item.id === platform)?.label ?? '';
+
+  /* Desktop is the more common first download, except on Linux where Podman
+     runs natively and the terminal is the expected route. */
+  const primaryId = platform === 'linux' ? 'cli' : 'desktop';
+  const primary = products.find(product => product.id === primaryId);
+  const secondary = products.find(product => product.id !== primaryId);
+  if (!primary) return null;
+
+  const accent = accents[primary.id];
+  const asset = getRecommendedAsset(primary, platform);
+  if (!asset) return null;
 
   return (
-    <section className="container my-12 lg:my-16">
-      <div className="mb-6 text-center">
-        <h2 className="mb-2 text-2xl text-gray-900 dark:text-gray-100">Choose your platform</h2>
+    <div className="mx-auto max-w-2xl text-center">
+      <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-100">
+        Detected {platformLabel}
+      </p>
+      <div className="rounded-md border-2 border-purple-300 bg-white p-6 shadow-md dark:border-purple-700 dark:bg-gray-900">
+        <h2 className={`mb-4 text-2xl ${accent.text}`}>
+          {primary.title} {primary.version}
+        </h2>
+
+        <a
+          href={asset.path}
+          className={`mx-auto flex max-w-md items-center justify-center gap-3 rounded-md px-8 py-4 text-xl font-semibold no-underline shadow-md transition duration-150 ease-in-out hover:no-underline hover:shadow-lg ${accent.button}`}>
+          <Icon icon="material-symbols:download-rounded" className="text-2xl" aria-hidden="true" />
+          Download for {platformLabel}
+        </a>
+        <p className="mt-3 mb-0 text-sm text-gray-700 dark:text-gray-100">
+          {asset.detail}
+          {asset.size && ` · ${asset.size}`}
+        </p>
+
+        {primary.checksums && (
+          <p className="mt-2 mb-0 text-sm">
+            <a href={primary.checksums.path} className={accent.text}>
+              {primary.checksums.text}
+            </a>
+          </p>
+        )}
+      </div>
+
+      {/* Secondary intent: available in one click, deliberately not competing. */}
+      {secondary && (
+        <p className="mt-4 mb-0 text-gray-700 dark:text-gray-100">
+          <a href="#all-downloads" className={accent.text}>
+            Just need {secondary.id === 'cli' ? 'the CLI' : 'the desktop app'}?
+          </a>
+        </p>
+      )}
+    </div>
+  );
+};
+
+/* PRODUCT CARDS */
+const ProductCard = ({ product, platform }: ProductCardProps): JSX.Element => {
+  const accent = accents[product.id];
+  const { assets, note } = product.downloads[platform];
+
+  return (
+    <article className="flex flex-1 flex-col rounded-md border-2 border-gray-100 bg-white p-6 shadow-md transition duration-150 ease-in-out hover:shadow-lg dark:border-gray-700 dark:bg-gray-900 lg:p-8">
+      <header className={`mb-6 border-b-2 pb-6 ${accent.rule}`}>
+        <div className="flex items-center gap-4">
+          <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-md ${accent.iconBox}`}>
+            <Icon icon={product.icon} className="text-3xl" aria-hidden="true" />
+          </span>
+          <div>
+            <h2 className={`mb-1 text-2xl ${accent.text}`}>{product.title}</h2>
+            <p className="mb-0 font-mono text-sm text-gray-700 dark:text-gray-100">Version {product.version}</p>
+          </div>
+        </div>
+        <p className="mt-4 mb-0 leading-relaxed text-gray-700 dark:text-gray-100">{product.tagline}</p>
+      </header>
+
+      {assets && assets.length > 0 && (
+        <ul className="mb-4 flex list-none flex-col gap-3 p-0">
+          {assets.map(asset => (
+            <li key={asset.label}>
+              <a
+                href={asset.path}
+                className={`flex items-center gap-3 rounded-md px-5 py-3 no-underline transition duration-150 ease-in-out hover:no-underline hover:shadow-md ${
+                  asset.recommended
+                    ? `font-semibold ${accent.button}`
+                    : 'border-2 border-gray-500 bg-white text-gray-700 hover:border-gray-700 dark:border-gray-500 dark:bg-gray-900 dark:text-gray-100 dark:hover:border-gray-300'
+                }`}>
+                <Icon
+                  icon={asset.isDocs ? 'fa6-solid:book' : 'material-symbols:download-rounded'}
+                  className="shrink-0 text-xl"
+                  aria-hidden="true"
+                />
+                <span className="flex flex-col">
+                  <span>{asset.label}</span>
+                  <span className={`text-sm font-normal ${asset.recommended ? 'text-white' : ''}`}>
+                    {asset.detail}
+                    {asset.size && ` · ${asset.size}`}
+                  </span>
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {note && <p className="mb-0 text-sm leading-relaxed text-gray-700 dark:text-gray-100">{note}</p>}
+
+      <footer className="mt-auto flex flex-wrap gap-x-6 gap-y-2 border-t-2 border-gray-100 pt-6 dark:border-gray-700">
+        <a href={product.releaseNotes.path} className={`text-sm ${accent.text}`}>
+          {product.releaseNotes.text}
+        </a>
+        {product.checksums && (
+          <a href={product.checksums.path} className={`text-sm ${accent.text}`}>
+            {product.checksums.text}
+          </a>
+        )}
+        <a href={product.docsLink.path} className={`text-sm ${accent.text}`}>
+          {product.docsLink.text}
+        </a>
+      </footer>
+    </article>
+  );
+};
+
+const ProductGrid = ({ platform }: { platform: PlatformId }): JSX.Element => (
+  <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
+    {products.map(product => (
+      <ProductCard key={product.id} product={product} platform={platform} />
+    ))}
+  </div>
+);
+
+/* SECTION CONTENT */
+function DownloadsSection(): JSX.Element {
+  const { detected, selected, select } = useOperatingSystem();
+
+  return (
+    <section className="container mb-12 mt-8 lg:mb-16 lg:mt-10">
+      {detected && (
+        <div className="mb-12">
+          <FastPath platform={detected} />
+        </div>
+      )}
+
+      <div id="all-downloads" className="mb-6 scroll-mt-24 text-center">
+        {detected && <hr className="mx-auto mb-8 max-w-3xl border-t-2 border-gray-100 dark:border-gray-700" />}
+        <h2 className="mb-2 text-2xl text-gray-900 dark:text-gray-100">
+          {detected ? 'Looking for a specific version or platform?' : 'Choose your platform'}
+        </h2>
         <p className="mx-auto max-w-2xl text-gray-700 dark:text-gray-100">
-          Podman runs on Windows, macOS, and Linux.
+          Every download for every platform — other architectures, the other product, and package manager instructions.
         </p>
       </div>
 
@@ -79,7 +251,9 @@ function DownloadsSection(): JSX.Element {
 
       <div className="mt-8">
         {selected ? (
-          <div role="tabpanel" id={`platform-panel-${selected}`} aria-labelledby={`platform-tab-${selected}`} />
+          <div role="tabpanel" id={`platform-panel-${selected}`} aria-labelledby={`platform-tab-${selected}`}>
+            <ProductGrid platform={selected} />
+          </div>
         ) : (
           /* No detection yet, or it failed: show every platform rather than guess. */
           <div className="flex flex-col gap-12">
@@ -93,6 +267,7 @@ function DownloadsSection(): JSX.Element {
                   <Icon icon={platform.icon} className="text-3xl" aria-hidden="true" />
                   {platform.label}
                 </h2>
+                <ProductGrid platform={platform.id} />
               </div>
             ))}
           </div>

@@ -2,7 +2,7 @@ import { LATEST_VERSION, LATEST_DESKTOP_VERSION } from '@site/static/data/global
 const operatingSystemData = [
   {
     id: 'windows',
-    preferred:{
+    preferred: {
       title: 'Podman Desktop for Windows',
       subtitle: `Windows Installer v-${LATEST_DESKTOP_VERSION}`,
       icon: 'fa-brands:windows',
@@ -24,8 +24,9 @@ const operatingSystemData = [
       path: `https://github.com/podman-container-tools/podman/releases/download/v${LATEST_VERSION}/podman-installer-windows-arm64.msi`,
     },
     other: {
-      path: 'docs/installation',
+      path: '/downloads',
       text: 'Other Install Options',
+      subtext: 'All platforms, architectures, and package managers',
     },
   },
   {
@@ -44,8 +45,9 @@ const operatingSystemData = [
       path: `https://github.com/podman-container-tools/podman/releases/download/v${LATEST_VERSION}/podman-installer-macos-arm64.pkg`,
     },
     other: {
-      path: 'docs/installation',
+      path: '/downloads',
       text: 'Other Install Options',
+      subtext: 'All platforms, architectures, and package managers',
     },
   },
   {
@@ -63,8 +65,9 @@ const operatingSystemData = [
       path: `https://github.com/podman-desktop/podman-desktop/releases/download/v${LATEST_DESKTOP_VERSION}/podman-desktop-${LATEST_DESKTOP_VERSION}.flatpak`,
     },
     other: {
-      path: 'docs/installation',
+      path: '/downloads',
       text: 'Other Install Options',
+      subtext: 'All platforms, architectures, and package managers',
     },
   },
 ];
