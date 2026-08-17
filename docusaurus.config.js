@@ -23,6 +23,7 @@ const config = {
   },
   plugins: [
     '@docusaurus/theme-live-codeblock',
+    './plugins/youtube-latest',
     async function tailwindPlugin() {
       return {
         name: 'docusaurus-tailwindcss',
@@ -33,7 +34,8 @@ const config = {
         },
       };
     },
-    ['@docusaurus/plugin-content-blog',
+    [
+      '@docusaurus/plugin-content-blog',
       {
         showReadingTime: true,
         routeBasePath: 'release',
