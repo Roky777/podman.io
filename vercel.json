@@ -1,0 +1,8 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "docusaurus-2",
+  "buildCommand": "yarn build",
+  "outputDirectory": "build",
+  "cleanUrls": true,
+  "trailingSlash": false
+}
